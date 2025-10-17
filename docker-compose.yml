@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  ontop:
+    image: ontop/ontop-endpoint
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./ontology.owl:/opt/ontop/input/ontology.owl
+      - ./r2rml.ttl:/opt/ontop/input/mapping.ttl
+      - ./data.sql:/opt/ontop/input/data.sql
+    environment:
+      - ONTOP_MAPPING_FILE=/opt/ontop/input/mapping.ttl
+      - ONTOP_ONTOLOGY_FILE=/opt/ontop/input/ontology.owl
+      - ONTOP_DB_URL=jdbc:h2:mem:test;DB_CLOSE_DELAY=-1
+      - ONTOP_DB_USER=sa
+      - ONTOP_DB_PASSWORD=
+      - ONTOP_PORT=8080
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ontop
+    networks:
+      - esdm_net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - esdm_net
+
+networks:
+  esdm_net:
+    driver: bridge
