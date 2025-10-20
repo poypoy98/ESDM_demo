@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  ollama_mock:
+    image: python:3.11-slim
+    container_name: ollama_mock
+    ports:
+      - "11434:11434"
+    networks:
+      - esdm_net
+    command: >
+      sh -c "pip install flask && python -u - <<'PY'
+from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/generate', methods=['POST'])
+def generate():
+    data = request.get_json() or {}
+    prompt = data.get('prompt', '')
+    response_text = 'SELECT ?s WHERE { ?s ?p ?o }' if 'event' in prompt.lower() else 'SELECT ?s ?p ?o WHERE { ?s ?p ?o }'
+    return jsonify({'response': response_text})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=11434)
+PY"
+
+networks:
+  esdm_net:
+    driver: bridge
